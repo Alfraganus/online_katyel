@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StorePayloadRequest;
 use App\Http\Requests\Api\V1\UpdatePayloadRequest;
 use App\Models\Payload;
+use App\Models\KatyelLastUpdated;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -44,12 +45,23 @@ class PayloadController extends Controller
      */
     public function store(StorePayloadRequest $request): JsonResponse
     {
+        $currentDateTime = date('Y-m-d H:i:s');
+
         $payload = Payload::create([
             'katyel_id' => $request->katyel_id,
             'katyel_name' => $request->katyel_name,
             'temp' => $request->temp,
-            'datetime' => date('Y-m-d H:i:s'),
+            'datetime' => $currentDateTime,
         ]);
+
+        KatyelLastUpdated::updateOrCreate(
+            ['katyel_id' => $request->katyel_id],
+            [
+                'katyel_name' => $request->katyel_name,
+                'temp' => $request->temp,
+                'last_updated_at' => $currentDateTime,
+            ]
+        );
 
         return response()->json([
             'success' => true,
